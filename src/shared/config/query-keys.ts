@@ -1,0 +1,15 @@
+export const queryKeys = {
+  authMe: ["auth", "me"] as const,
+  users: ["users"] as const,
+  farms: ["farms"] as const,
+  fields: ["fields"] as const,
+  farmPermissions: ["farm-permissions"] as const,
+  units: ["units"] as const,
+  products: ["products"] as const,
+  inventoryLocations: ["inventory-locations"] as const,
+  inventoryBalance: ["inventory-balance"] as const,
+  supportTenants: ["support-tenants"] as const,
+  supportTenantDetail: ["support-tenant-detail"] as const,
+  supportCatalogUnits: ["support-catalog-units"] as const,
+  supportCatalogProducts: ["support-catalog-products"] as const,
+};

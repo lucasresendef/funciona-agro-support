@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-dark: 142 58% 24%;
+  --brand: 142 58% 37%;
+  --brand-light: 145 46% 84%;
+
+  --background: 150 36% 98%;
+  --surface: 0 0% 100%;
+  --surface-muted: 144 24% 95%;
+  --foreground: 145 35% 13%;
+  --foreground-muted: 145 10% 39%;
+  --border: 144 16% 86%;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  --shadow-soft: 0 8px 20px -12px hsl(var(--brand-dark) / 0.22);
+  --shadow-card: 0 14px 30px -18px hsl(var(--brand-dark) / 0.3);
+}
+
+* {
+  @apply border-[hsl(var(--border))];
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased;
+}
+
+.app-shell-bg {
+  background: radial-gradient(circle at 0% 0%, hsl(var(--brand-light) / 0.35), transparent 32%),
+    radial-gradient(circle at 100% 100%, hsl(var(--brand-light) / 0.2), transparent 36%),
+    hsl(var(--background));
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, hsl(var(--brand-dark)) 0%, hsl(var(--brand)) 70%);
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--surface-muted)) 20%,
+    hsl(var(--surface)) 40%,
+    hsl(var(--surface-muted)) 60%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.fade-up {
+  animation: fade-up 0.45s ease-out;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
