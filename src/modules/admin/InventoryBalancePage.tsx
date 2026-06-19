@@ -12,10 +12,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +27,7 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 
 export function InventoryBalancePage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetBalance, setTargetBalance] = useState<InventoryBalanceEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<InventoryBalanceEntity | null>(null);
@@ -36,8 +39,9 @@ export function InventoryBalancePage() {
   const [notes, setNotes] = useState("");
 
   const balancesQuery = useQuery({
-    queryKey: [...queryKeys.inventoryBalance, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listInventoryBalances({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.inventoryBalance, pagination.pagination],
+    queryFn: () => adminOperationsApi.listInventoryBalances(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const farmsQuery = useQuery({
@@ -193,7 +197,8 @@ export function InventoryBalancePage() {
           onAction={openCreateDialog}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -237,7 +242,17 @@ export function InventoryBalancePage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={balancesQuery.data?.total ?? 0}
+            totalPages={balancesQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

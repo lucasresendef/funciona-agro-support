@@ -9,10 +9,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +24,7 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 
 export function FarmsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const { profile } = useAuth();
   const canManage = isAppAdmin(profile);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
@@ -31,8 +34,9 @@ export function FarmsPage() {
   const [description, setDescription] = useState("");
 
   const query = useQuery({
-    queryKey: [...queryKeys.farms, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listFarms({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.farms, pagination.pagination],
+    queryFn: () => adminOperationsApi.listFarms(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   async function invalidateFarms() {
@@ -133,7 +137,8 @@ export function FarmsPage() {
           description="Adicione fazendas para estruturar áreas e permissões da plataforma."
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -173,7 +178,17 @@ export function FarmsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={query.data?.total ?? 0}
+            totalPages={query.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

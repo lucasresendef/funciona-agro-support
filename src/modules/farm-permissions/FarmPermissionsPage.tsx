@@ -8,10 +8,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +23,7 @@ const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 tex
 
 export function FarmPermissionsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetPermission, setTargetPermission] = useState<FarmPermissionListEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<FarmPermissionListEntity | null>(null);
@@ -30,8 +33,9 @@ export function FarmPermissionsPage() {
   const [active, setActive] = useState(true);
 
   const permissionsQuery = useQuery({
-    queryKey: [...queryKeys.farmPermissions, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listPermissions({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.farmPermissions, pagination.pagination],
+    queryFn: () => adminOperationsApi.listPermissions(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const farmsQuery = useQuery({
@@ -160,7 +164,8 @@ export function FarmPermissionsPage() {
           onAction={openCreateDialog}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -202,7 +207,17 @@ export function FarmPermissionsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={permissionsQuery.data?.total ?? 0}
+            totalPages={permissionsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

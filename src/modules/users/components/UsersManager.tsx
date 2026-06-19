@@ -48,12 +48,19 @@ export interface UsersManagerApi {
 
 interface UsersManagerProps {
   users: UsersManagerUser[];
+  totalUsers: number;
   isLoading?: boolean;
   onChanged: () => Promise<void> | void;
   api: UsersManagerApi;
 }
 
-export function UsersManager({ users, isLoading, onChanged, api }: UsersManagerProps) {
+export function UsersManager({
+  users,
+  totalUsers,
+  isLoading,
+  onChanged,
+  api,
+}: UsersManagerProps) {
   const navigate = useNavigate();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -162,7 +169,7 @@ export function UsersManager({ users, isLoading, onChanged, api }: UsersManagerP
         <h3 className="text-lg font-bold text-[hsl(var(--brand-dark))]">Usuários</h3>
         <div className="flex items-center gap-3">
           <span className="text-sm text-[hsl(var(--foreground-muted))]">
-            {users.length} cadastrados
+            {totalUsers} cadastrados
           </span>
           <AppButton type="button" className="h-9 px-3" onClick={openCreateDialog}>
             <Plus size={16} className="mr-1" />

@@ -510,6 +510,7 @@ export function TenantDetailPage() {
         {tab === "users" ? (
           <UsersManager
             users={tenant.users}
+            totalUsers={tenant.users.length}
             isLoading={detailQuery.isLoading}
             onChanged={invalidateTenant}
             api={tenantUsersApi}

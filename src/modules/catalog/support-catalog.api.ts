@@ -1,5 +1,9 @@
 import { api } from "@/shared/lib/http/api-client";
-import { type BackendPaginatedResponse, DataWrapper, toAppPaginated } from "@/shared/types/api";
+import {
+  type BackendPaginatedResponse,
+  type DataWrapper,
+  toAppPaginated,
+} from "@/shared/types/api";
 import type {
   CreateSupportCatalogProductRequestDto,
   CreateSupportCatalogUnitRequestDto,

@@ -9,9 +9,11 @@ import { formatBooleanPtBr } from "@/shared/lib/utils/format";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -23,6 +25,7 @@ const textareaClassName =
 export function CatalogProductsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
 
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -41,8 +44,9 @@ export function CatalogProductsPage() {
   const [editingActive, setEditingActive] = useState(true);
 
   const productsQuery = useQuery({
-    queryKey: [...queryKeys.supportCatalogProducts, { page: 1, limit: 100 }],
-    queryFn: () => supportCatalogApi.listProducts({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.supportCatalogProducts, pagination.pagination],
+    queryFn: () => supportCatalogApi.listProducts(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const unitsQuery = useQuery({
@@ -272,7 +276,8 @@ export function CatalogProductsPage() {
           description="Crie produtos no catálogo global para disponibilizar nas operações."
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -321,7 +326,17 @@ export function CatalogProductsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={productsQuery.data?.total ?? 0}
+            totalPages={productsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
     </div>
   );

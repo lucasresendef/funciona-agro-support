@@ -8,10 +8,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +23,7 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 
 export function InventoryLocationsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetLocation, setTargetLocation] = useState<InventoryLocationEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<InventoryLocationEntity | null>(null);
@@ -29,8 +32,9 @@ export function InventoryLocationsPage() {
   const [description, setDescription] = useState("");
 
   const locationsQuery = useQuery({
-    queryKey: [...queryKeys.inventoryLocations, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listInventoryLocations({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.inventoryLocations, pagination.pagination],
+    queryFn: () => adminOperationsApi.listInventoryLocations(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const farmsQuery = useQuery({
@@ -147,7 +151,8 @@ export function InventoryLocationsPage() {
           onAction={openCreateDialog}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -187,7 +192,17 @@ export function InventoryLocationsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={locationsQuery.data?.total ?? 0}
+            totalPages={locationsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

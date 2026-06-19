@@ -7,9 +7,11 @@ import { formatBooleanPtBr } from "@/shared/lib/utils/format";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,6 +21,7 @@ const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 tex
 export function CatalogUnitsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [editingUnit, setEditingUnit] = useState<SupportCatalogUnitDto | null>(null);
@@ -27,8 +30,9 @@ export function CatalogUnitsPage() {
   const [editingActive, setEditingActive] = useState(true);
 
   const query = useQuery({
-    queryKey: [...queryKeys.supportCatalogUnits, { page: 1, limit: 100 }],
-    queryFn: () => supportCatalogApi.listUnits({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.supportCatalogUnits, pagination.pagination],
+    queryFn: () => supportCatalogApi.listUnits(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -187,7 +191,8 @@ export function CatalogUnitsPage() {
           description="Crie unidades de medida para liberar o cadastro de produtos."
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -230,7 +235,17 @@ export function CatalogUnitsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={query.data?.total ?? 0}
+            totalPages={query.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
     </div>
   );

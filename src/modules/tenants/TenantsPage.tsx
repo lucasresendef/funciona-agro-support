@@ -10,10 +10,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Eye, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -26,6 +28,7 @@ type TenantStatusFilter = "all" | "active" | "inactive";
 export function TenantsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TenantStatusFilter>("all");
@@ -38,15 +41,16 @@ export function TenantsPage() {
     () => ({
       search: search.trim() || undefined,
       active: statusFilter === "all" ? undefined : statusFilter === "active",
-      page: 1,
-      limit: 100,
+      page: pagination.page,
+      limit: pagination.limit,
     }),
-    [search, statusFilter],
+    [pagination.limit, pagination.page, search, statusFilter],
   );
 
   const tenantsQuery = useQuery({
     queryKey: [...queryKeys.supportTenants, filters],
     queryFn: () => supportTenantsApi.listTenants(filters),
+    placeholderData: keepPreviousData,
   });
 
   useEffect(() => {
@@ -142,14 +146,20 @@ export function TenantsPage() {
           />
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              pagination.resetPage();
+            }}
             placeholder="Buscar por nome ou key"
             className={`${inputClassName} w-full pl-9`}
           />
         </label>
         <select
           value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as TenantStatusFilter)}
+          onChange={(event) => {
+            setStatusFilter(event.target.value as TenantStatusFilter);
+            pagination.resetPage();
+          }}
           className={inputClassName}
         >
           <option value="all">Todos os status</option>
@@ -184,7 +194,8 @@ export function TenantsPage() {
           onAction={() => navigate(routes.tenantsNew)}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -251,7 +262,17 @@ export function TenantsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={tenantsQuery.data?.total ?? 0}
+            totalPages={tenantsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

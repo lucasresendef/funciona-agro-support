@@ -14,10 +14,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +29,7 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 
 export function ProductsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const { profile } = useAuth();
   const canManage = isAppAdmin(profile);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
@@ -44,8 +47,9 @@ export function ProductsPage() {
   const [averageUnitCost, setAverageUnitCost] = useState("0");
 
   const productsQuery = useQuery({
-    queryKey: [...queryKeys.products, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listProducts({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.products, pagination.pagination],
+    queryFn: () => adminOperationsApi.listProducts(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const unitsQuery = useQuery({
@@ -221,7 +225,8 @@ export function ProductsPage() {
           onAction={canManage ? openCreateDialog : undefined}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -267,7 +272,17 @@ export function ProductsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={productsQuery.data?.total ?? 0}
+            totalPages={productsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

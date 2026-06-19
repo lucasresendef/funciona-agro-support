@@ -3,9 +3,11 @@ import { queryKeys } from "@/shared/config/query-keys";
 import { api } from "@/shared/lib/http/api-client";
 import { type BackendPaginatedResponse, toAppPaginated } from "@/shared/types/api";
 import type { AppUserEntity } from "@/shared/types/auth";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const usersApi: UsersManagerApi = {
   create: (input) => api.post("/users", input),
@@ -15,15 +17,17 @@ const usersApi: UsersManagerApi = {
 
 export function UsersPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
 
   const query = useQuery({
-    queryKey: [...queryKeys.users, { page: 1, limit: 100 }],
+    queryKey: [...queryKeys.users, pagination.pagination],
     queryFn: async () => {
       const res = await api.get<BackendPaginatedResponse<AppUserEntity>>("/users", {
-        params: { page: 1, limit: 100 },
+        params: pagination.pagination,
       });
       return toAppPaginated(res.data);
     },
+    placeholderData: keepPreviousData,
   });
 
   const users = (query.data?.data ?? []).map((user) => ({
@@ -46,10 +50,22 @@ export function UsersPage() {
 
       <UsersManager
         users={users}
+        totalUsers={query.data?.total ?? 0}
         isLoading={query.isLoading}
         onChanged={() => queryClient.invalidateQueries({ queryKey: queryKeys.users })}
         api={usersApi}
       />
+
+      {query.data && query.data.total > 0 ? (
+        <PaginationControls
+          page={pagination.page}
+          limit={pagination.limit}
+          total={query.data.total}
+          totalPages={query.data.totalPages}
+          onPageChange={pagination.setPage}
+          onLimitChange={pagination.setLimit}
+        />
+      ) : null}
     </div>
   );
 }

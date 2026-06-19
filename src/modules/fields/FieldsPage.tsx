@@ -9,10 +9,12 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +24,7 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 
 export function FieldsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const { profile } = useAuth();
   const canManage = isAppAdmin(profile);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
@@ -33,8 +36,9 @@ export function FieldsPage() {
   const [description, setDescription] = useState("");
 
   const fieldsQuery = useQuery({
-    queryKey: [...queryKeys.fields, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listFields({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.fields, pagination.pagination],
+    queryFn: () => adminOperationsApi.listFields(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   const farmsQuery = useQuery({
@@ -157,7 +161,8 @@ export function FieldsPage() {
           onAction={canManage ? openCreateDialog : undefined}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -199,7 +204,17 @@ export function FieldsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={fieldsQuery.data?.total ?? 0}
+            totalPages={fieldsQuery.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog

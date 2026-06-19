@@ -9,9 +9,11 @@ import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
+import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +22,7 @@ const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 tex
 
 export function UnitsPage() {
   const queryClient = useQueryClient();
+  const pagination = usePaginationState();
   const { profile } = useAuth();
   const canManage = isPortalAdmin(profile);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
@@ -29,8 +32,9 @@ export function UnitsPage() {
   const [symbol, setSymbol] = useState("");
 
   const query = useQuery({
-    queryKey: [...queryKeys.units, { page: 1, limit: 100 }],
-    queryFn: () => adminOperationsApi.listUnits({ page: 1, limit: 100 }),
+    queryKey: [...queryKeys.units, pagination.pagination],
+    queryFn: () => adminOperationsApi.listUnits(pagination.pagination),
+    placeholderData: keepPreviousData,
   });
 
   async function invalidateUnits() {
@@ -130,7 +134,8 @@ export function UnitsPage() {
           onAction={canManage ? openCreateDialog : undefined}
         />
       ) : (
-        <AppCard className="overflow-auto">
+        <>
+          <AppCard className="overflow-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-[hsl(var(--surface-muted))]">
               <tr>
@@ -170,7 +175,17 @@ export function UnitsPage() {
               ))}
             </tbody>
           </table>
-        </AppCard>
+          </AppCard>
+
+          <PaginationControls
+            page={pagination.page}
+            limit={pagination.limit}
+            total={query.data?.total ?? 0}
+            totalPages={query.data?.totalPages ?? 0}
+            onPageChange={pagination.setPage}
+            onLimitChange={pagination.setLimit}
+          />
+        </>
       )}
 
       <AppDialog
