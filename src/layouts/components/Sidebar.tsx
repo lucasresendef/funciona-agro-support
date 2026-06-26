@@ -1,52 +1,9 @@
-import { useAuth } from "@/modules/auth/AuthContext";
-import { isAppAdmin, isSupportAdmin } from "@/shared/config/permissions";
-import { routes } from "@/shared/config/routes";
 import { BrandLogo } from "@/shared/ui/components/BrandLogo";
-import {
-  BadgeCent,
-  Building2,
-  FileSpreadsheet,
-  Home,
-  Leaf,
-  MapPinned,
-  Package,
-  Users,
-  Warehouse,
-} from "lucide-react";
 import { NavLink } from "react-router-dom";
-
-const supportItems = [
-  { to: routes.tenants, label: "Tenants", icon: Building2 },
-  { to: routes.units, label: "Unidades", icon: BadgeCent },
-];
-
-const tenantAdminItems = [
-  { to: routes.users, label: "Usuários", icon: Users },
-  { to: routes.farms, label: "Fazendas", icon: Building2 },
-  { to: routes.fields, label: "Talhões", icon: Leaf },
-  { to: routes.farmPermissions, label: "Permissões", icon: MapPinned },
-  { to: routes.units, label: "Unidades", icon: BadgeCent },
-  { to: routes.products, label: "Produtos", icon: Package },
-  { to: routes.inventoryLocations, label: "Locais Estoque", icon: Warehouse },
-  { to: routes.inventoryBalance, label: "Saldo Estoque", icon: Package },
-  { to: routes.reports, label: "Relatórios", icon: FileSpreadsheet },
-];
-
-const commonItems = [
-  { to: routes.units, label: "Unidades", icon: BadgeCent },
-  { to: routes.products, label: "Produtos", icon: Package },
-  { to: routes.farms, label: "Fazendas", icon: Building2 },
-  { to: routes.fields, label: "Talhões", icon: Leaf },
-];
+import { useNavItems } from "./useNavItems";
 
 export function Sidebar() {
-  const { profile } = useAuth();
-  const roleItems = isSupportAdmin(profile)
-    ? supportItems
-    : isAppAdmin(profile)
-      ? tenantAdminItems
-      : commonItems;
-  const items = [{ to: routes.home, label: "Início", icon: Home }, ...roleItems];
+  const items = useNavItems();
 
   return (
     <aside className="sticky top-0 hidden h-screen w-72 flex-shrink-0 overflow-y-auto border-r bg-[hsl(var(--surface))] px-4 py-5 md:flex md:flex-col">

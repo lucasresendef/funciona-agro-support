@@ -110,7 +110,9 @@ export function NewTenantPage() {
     }
     const invalidFieldArea = farms
       .flatMap((farm) => farm.fields)
-      .find((field) => !Number.isFinite(Number(field.areaHectares)) || Number(field.areaHectares) < 0);
+      .find(
+        (field) => !Number.isFinite(Number(field.areaHectares)) || Number(field.areaHectares) < 0,
+      );
     if (invalidFieldArea) {
       toast.error("Toda área inicial de campo precisa ser um número válido");
       return false;
@@ -343,8 +345,15 @@ export function NewTenantPage() {
 
       <AppCard className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[hsl(var(--brand-dark))]">Fazendas e campos iniciais</h2>
-          <AppButton type="button" variant="secondary" className="h-9 px-3" onClick={openCreateFarmDialog}>
+          <h2 className="text-lg font-bold text-[hsl(var(--brand-dark))]">
+            Fazendas e campos iniciais
+          </h2>
+          <AppButton
+            type="button"
+            variant="secondary"
+            className="h-9 px-3"
+            onClick={openCreateFarmDialog}
+          >
             <Plus size={16} className="mr-1" />
             Nova fazenda
           </AppButton>
@@ -360,13 +369,18 @@ export function NewTenantPage() {
               <div key={farm.id} className="rounded-[var(--radius-md)] border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <h3 className="text-base font-semibold text-[hsl(var(--brand-dark))]">{farm.name}</h3>
+                    <h3 className="text-base font-semibold text-[hsl(var(--brand-dark))]">
+                      {farm.name}
+                    </h3>
                     <p className="text-sm text-[hsl(var(--foreground-muted))]">
                       {(farm.description ?? "").trim() || "Sem descrição"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <TableIconButton aria-label={`Editar ${farm.name}`} onClick={() => openEditFarmDialog(farm)}>
+                    <TableIconButton
+                      aria-label={`Editar ${farm.name}`}
+                      onClick={() => openEditFarmDialog(farm)}
+                    >
                       <Pencil size={16} />
                     </TableIconButton>
                     <TableIconButton
@@ -392,7 +406,10 @@ export function NewTenantPage() {
                     <tbody>
                       {farm.fields.length === 0 ? (
                         <tr>
-                          <td className="px-3 py-3 text-sm text-[hsl(var(--foreground-muted))]" colSpan={4}>
+                          <td
+                            className="px-3 py-3 text-sm text-[hsl(var(--foreground-muted))]"
+                            colSpan={4}
+                          >
                             Nenhum campo cadastrado nesta fazenda.
                           </td>
                         </tr>

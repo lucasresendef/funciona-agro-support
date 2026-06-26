@@ -6,12 +6,16 @@ import { getApiErrorMessage } from "@/shared/lib/http/security";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
+import { SearchInput } from "@/shared/ui/components/SearchInput";
+import { StatusFilter } from "@/shared/ui/components/StatusFilter";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
+import { useDebouncedValue } from "@/shared/lib/hooks/useDebouncedValue";
 import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
@@ -24,6 +28,9 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 export function InventoryLocationsPage() {
   const queryClient = useQueryClient();
   const pagination = usePaginationState();
+  const [showActive, setShowActive] = useState(true);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetLocation, setTargetLocation] = useState<InventoryLocationEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<InventoryLocationEntity | null>(null);
@@ -32,8 +39,13 @@ export function InventoryLocationsPage() {
   const [description, setDescription] = useState("");
 
   const locationsQuery = useQuery({
-    queryKey: [...queryKeys.inventoryLocations, pagination.pagination],
-    queryFn: () => adminOperationsApi.listInventoryLocations(pagination.pagination),
+    queryKey: [...queryKeys.inventoryLocations, pagination.pagination, showActive, debouncedSearch],
+    queryFn: () =>
+      adminOperationsApi.listInventoryLocations({
+        ...pagination.pagination,
+        active: showActive,
+        search: debouncedSearch.trim() || undefined,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -124,6 +136,13 @@ export function InventoryLocationsPage() {
         breadcrumb="Operações / Locais de Estoque"
         actions={
           <div className="flex items-center gap-2">
+            <StatusFilter
+              value={showActive}
+              onChange={(active) => {
+                setShowActive(active);
+                pagination.setPage(1);
+              }}
+            />
             <RefreshIconButton
               onClick={() => {
                 void queryClient.invalidateQueries({ queryKey: queryKeys.inventoryLocations });
@@ -137,6 +156,18 @@ export function InventoryLocationsPage() {
           </div>
         }
       />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <SearchInput
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            pagination.setPage(1);
+          }}
+          placeholder="Buscar local..."
+          className="w-full sm:max-w-xs"
+        />
+      </div>
 
       {locationsQuery.isError ? (
         <EmptyState
@@ -153,45 +184,43 @@ export function InventoryLocationsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Nome</th>
-                <th className="px-3 py-2">Fazenda</th>
-                <th className="px-3 py-2">Descrição</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {locations.map((location) => (
-                <tr key={location.id} className="border-t">
-                  <td className="px-3 py-2">{location.name}</td>
-                  <td className="px-3 py-2">{location.farm.name}</td>
-                  <td className="px-3 py-2">{location.description ?? "-"}</td>
-                  <td className="px-3 py-2">{location.active ? "Ativo" : "Inativo"}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
-                      <TableIconButton
-                        aria-label={`Editar ${location.name}`}
-                        onClick={() => openEditDialog(location)}
-                      >
-                        <Pencil size={16} />
-                      </TableIconButton>
-                      <TableIconButton
-                        aria-label={`Inativar ${location.name}`}
-                        variant="danger"
-                        disabled={deactivateMutation.isPending}
-                        onClick={() => setConfirmTarget(location)}
-                      >
-                        <Trash2 size={16} />
-                      </TableIconButton>
-                    </div>
-                  </td>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Nome</th>
+                  <th className="px-3 py-2">Fazenda</th>
+                  <th className="px-3 py-2">Descrição</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {locations.map((location) => (
+                  <tr key={location.id} className="border-t">
+                    <td className="px-3 py-2">{location.name}</td>
+                    <td className="px-3 py-2">{location.farm.name}</td>
+                    <td className="px-3 py-2">{location.description ?? "-"}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <TableIconButton
+                          aria-label={`Editar ${location.name}`}
+                          onClick={() => openEditDialog(location)}
+                        >
+                          <Pencil size={16} />
+                        </TableIconButton>
+                        <TableIconButton
+                          aria-label={`Inativar ${location.name}`}
+                          variant="danger"
+                          disabled={deactivateMutation.isPending}
+                          onClick={() => setConfirmTarget(location)}
+                        >
+                          <Trash2 size={16} />
+                        </TableIconButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls
@@ -242,19 +271,13 @@ export function InventoryLocationsPage() {
         }
       >
         <div className="grid gap-3">
-          <select
+          <AppSelect
             value={farmId}
-            onChange={(event) => setFarmId(event.target.value)}
-            className={inputClassName}
+            onValueChange={(value) => setFarmId(value)}
+            options={farms.map((farm: FarmEntity) => ({ value: farm.id, label: farm.name }))}
+            placeholder="Selecione a fazenda"
             disabled={dialogMode === "edit"}
-          >
-            <option value="">Selecione a fazenda</option>
-            {farms.map((farm: FarmEntity) => (
-              <option key={farm.id} value={farm.id}>
-                {farm.name}
-              </option>
-            ))}
-          </select>
+          />
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}

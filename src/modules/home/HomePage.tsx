@@ -7,11 +7,14 @@ import {
   ArrowRight,
   BadgeCent,
   Building2,
+  FileBarChart2,
+  LayoutDashboard,
   Leaf,
   type LucideIcon,
   MapPinned,
   Package,
   Sparkles,
+  Tractor,
   TrendingUp,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -40,6 +43,24 @@ const supportShortcuts: Shortcut[] = [
 
 const appShortcuts: Shortcut[] = [
   {
+    to: routes.operations,
+    label: "Operações",
+    description: "Envio de produtos aos talhões e devolutiva de consumo.",
+    icon: Tractor,
+  },
+  {
+    to: routes.metrics,
+    label: "Métricas",
+    description: "Indicadores de consumo, custo e estoque.",
+    icon: LayoutDashboard,
+  },
+  {
+    to: routes.fieldReport,
+    label: "Relatório por Talhão",
+    description: "Consumo por talhão, com baixar e compartilhar imagem.",
+    icon: FileBarChart2,
+  },
+  {
     to: routes.farms,
     label: "Fazendas",
     description: "Cadastro e gestão das suas fazendas.",
@@ -66,6 +87,24 @@ const appShortcuts: Shortcut[] = [
 ];
 
 const viewerShortcuts: Shortcut[] = [
+  {
+    to: routes.operations,
+    label: "Operações",
+    description: "Envio de produtos aos talhões e devolutiva de consumo.",
+    icon: Tractor,
+  },
+  {
+    to: routes.metrics,
+    label: "Métricas",
+    description: "Indicadores de consumo, custo e estoque.",
+    icon: LayoutDashboard,
+  },
+  {
+    to: routes.fieldReport,
+    label: "Relatório por Talhão",
+    description: "Consumo por talhão, com baixar e compartilhar imagem.",
+    icon: FileBarChart2,
+  },
   {
     to: routes.units,
     label: "Unidades",

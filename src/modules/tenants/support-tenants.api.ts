@@ -60,7 +60,10 @@ export const supportTenantsApi = {
   },
 
   async createTenant(payload: CreateTenantRequestDto): Promise<CreateTenantResponseDto> {
-    const res = await api.post<DataWrapper<{ tenant: { id: string } }>>("/support/tenants", payload);
+    const res = await api.post<DataWrapper<{ tenant: { id: string } }>>(
+      "/support/tenants",
+      payload,
+    );
     return {
       id: res.data.data.tenant.id,
     };

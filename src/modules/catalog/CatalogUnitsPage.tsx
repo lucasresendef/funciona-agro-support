@@ -105,9 +105,7 @@ export function CatalogUnitsPage() {
         title="Unidades"
         subtitle="Cadastro global de unidades de medida para o catálogo"
         breadcrumb="Operações / Catálogo / Unidades"
-        actions={
-          <RefreshIconButton onClick={() => query.refetch()} disabled={query.isFetching} />
-        }
+        actions={<RefreshIconButton onClick={() => query.refetch()} disabled={query.isFetching} />}
       />
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -144,7 +142,12 @@ export function CatalogUnitsPage() {
           <AppCard className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-[hsl(var(--brand-dark))]">Editar unidade</h3>
-              <AppButton type="button" variant="ghost" className="h-9 px-3" onClick={() => setEditingUnit(null)}>
+              <AppButton
+                type="button"
+                variant="ghost"
+                className="h-9 px-3"
+                onClick={() => setEditingUnit(null)}
+              >
                 Fechar
               </AppButton>
             </div>
@@ -193,48 +196,53 @@ export function CatalogUnitsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Nome</th>
-                <th className="px-3 py-2">Símbolo</th>
-                <th className="px-3 py-2">Ativa</th>
-                <th className="px-3 py-2">Atualizada em</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {units.map((unit) => (
-                <tr key={unit.id} className="border-t">
-                  <td className="px-3 py-2">{unit.name}</td>
-                  <td className="px-3 py-2">{unit.symbol}</td>
-                  <td className="px-3 py-2">{formatBooleanPtBr(unit.active)}</td>
-                  <td className="px-3 py-2">{formatDatePtBr(unit.updatedAt)}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
-                      <AppButton type="button" variant="ghost" className="h-9 px-3" onClick={() => startEdit(unit)}>
-                        Editar
-                      </AppButton>
-                      <AppButton
-                        type="button"
-                        variant="ghost"
-                        className="h-9 px-3"
-                        disabled={toggleStatusMutation.isPending}
-                        onClick={() =>
-                          toggleStatusMutation.mutate({
-                            unitId: unit.id,
-                            active: !unit.active,
-                          })
-                        }
-                      >
-                        {unit.active ? "Inativar" : "Reativar"}
-                      </AppButton>
-                    </div>
-                  </td>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Nome</th>
+                  <th className="px-3 py-2">Símbolo</th>
+                  <th className="px-3 py-2">Ativa</th>
+                  <th className="px-3 py-2">Atualizada em</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {units.map((unit) => (
+                  <tr key={unit.id} className="border-t">
+                    <td className="px-3 py-2">{unit.name}</td>
+                    <td className="px-3 py-2">{unit.symbol}</td>
+                    <td className="px-3 py-2">{formatBooleanPtBr(unit.active)}</td>
+                    <td className="px-3 py-2">{formatDatePtBr(unit.updatedAt)}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          className="h-9 px-3"
+                          onClick={() => startEdit(unit)}
+                        >
+                          Editar
+                        </AppButton>
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          className="h-9 px-3"
+                          disabled={toggleStatusMutation.isPending}
+                          onClick={() =>
+                            toggleStatusMutation.mutate({
+                              unitId: unit.id,
+                              active: !unit.active,
+                            })
+                          }
+                        >
+                          {unit.active ? "Inativar" : "Reativar"}
+                        </AppButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls

@@ -10,12 +10,16 @@ import { getApiErrorMessage } from "@/shared/lib/http/security";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
+import { StatusFilter } from "@/shared/ui/components/StatusFilter";
+import { SearchInput } from "@/shared/ui/components/SearchInput";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
+import { useDebouncedValue } from "@/shared/lib/hooks/useDebouncedValue";
 import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
@@ -28,6 +32,11 @@ const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white p
 export function InventoryBalancePage() {
   const queryClient = useQueryClient();
   const pagination = usePaginationState();
+  const [showActive, setShowActive] = useState(true);
+  const [filterFarmId, setFilterFarmId] = useState("");
+  const [filterLocationId, setFilterLocationId] = useState("");
+  const [searchProduct, setSearchProduct] = useState("");
+  const debouncedSearch = useDebouncedValue(searchProduct, 300);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetBalance, setTargetBalance] = useState<InventoryBalanceEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<InventoryBalanceEntity | null>(null);
@@ -39,21 +48,33 @@ export function InventoryBalancePage() {
   const [notes, setNotes] = useState("");
 
   const balancesQuery = useQuery({
-    queryKey: [...queryKeys.inventoryBalance, pagination.pagination],
-    queryFn: () => adminOperationsApi.listInventoryBalances(pagination.pagination),
+    queryKey: [
+      ...queryKeys.inventoryBalance,
+      pagination.pagination,
+      showActive,
+      filterFarmId,
+      filterLocationId,
+      debouncedSearch,
+    ],
+    queryFn: () =>
+      adminOperationsApi.listInventoryBalances({
+        ...pagination.pagination,
+        active: showActive,
+        farmId: filterFarmId || undefined,
+        inventoryLocationId: filterLocationId || undefined,
+        search: debouncedSearch.trim() || undefined,
+      }),
     placeholderData: keepPreviousData,
   });
 
   const farmsQuery = useQuery({
     queryKey: [...queryKeys.farms, { page: 1, limit: 100, active: true }],
     queryFn: () => adminOperationsApi.listFarms({ page: 1, limit: 100, active: true }),
-    enabled: dialogMode === "create",
   });
 
   const locationsQuery = useQuery({
     queryKey: [...queryKeys.inventoryLocations, { page: 1, limit: 100, active: true }],
     queryFn: () => adminOperationsApi.listInventoryLocations({ page: 1, limit: 100, active: true }),
-    enabled: dialogMode === "create",
   });
 
   const productsQuery = useQuery({
@@ -68,6 +89,14 @@ export function InventoryBalancePage() {
         (location: InventoryLocationEntity) => !farmId || location.farmId === farmId,
       ),
     [farmId, locationsQuery.data?.data],
+  );
+
+  const filterLocations = useMemo(
+    () =>
+      (locationsQuery.data?.data ?? []).filter(
+        (location: InventoryLocationEntity) => !filterFarmId || location.farmId === filterFarmId,
+      ),
+    [filterFarmId, locationsQuery.data?.data],
   );
 
   async function invalidateBalances() {
@@ -163,6 +192,13 @@ export function InventoryBalancePage() {
         breadcrumb="Operações / Saldo de Estoque"
         actions={
           <div className="flex items-center gap-2">
+            <StatusFilter
+              value={showActive}
+              onChange={(active) => {
+                setShowActive(active);
+                pagination.setPage(1);
+              }}
+            />
             <RefreshIconButton
               onClick={() => {
                 void queryClient.invalidateQueries({ queryKey: queryKeys.inventoryBalance });
@@ -184,6 +220,42 @@ export function InventoryBalancePage() {
         }
       />
 
+      <div className="grid gap-3 sm:grid-cols-3">
+        <AppSelect
+          value={filterFarmId}
+          onValueChange={(value) => {
+            setFilterFarmId(value);
+            setFilterLocationId("");
+            pagination.setPage(1);
+          }}
+          ariaLabel="Filtrar por fazenda"
+          options={[
+            { value: "", label: "Todas as fazendas" },
+            ...farms.map((farm: FarmEntity) => ({ value: farm.id, label: farm.name })),
+          ]}
+        />
+        <AppSelect
+          value={filterLocationId}
+          onValueChange={(value) => {
+            setFilterLocationId(value);
+            pagination.setPage(1);
+          }}
+          ariaLabel="Filtrar por local de estoque"
+          options={[
+            { value: "", label: "Todos os locais" },
+            ...filterLocations.map((location) => ({ value: location.id, label: location.name })),
+          ]}
+        />
+        <SearchInput
+          value={searchProduct}
+          onChange={(value) => {
+            setSearchProduct(value);
+            pagination.setPage(1);
+          }}
+          placeholder="Buscar produto..."
+        />
+      </div>
+
       {balancesQuery.isError ? (
         <EmptyState
           title="Erro ao carregar saldos"
@@ -199,49 +271,47 @@ export function InventoryBalancePage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Produto</th>
-                <th className="px-3 py-2">Fazenda</th>
-                <th className="px-3 py-2">Local</th>
-                <th className="px-3 py-2">Quantidade</th>
-                <th className="px-3 py-2">Custo médio</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {balances.map((balance) => (
-                <tr key={balance.id} className="border-t">
-                  <td className="px-3 py-2">{balance.product.name}</td>
-                  <td className="px-3 py-2">{balance.farm.name}</td>
-                  <td className="px-3 py-2">{balance.inventoryLocation.name}</td>
-                  <td className="px-3 py-2">{Number(balance.quantity)}</td>
-                  <td className="px-3 py-2">{Number(balance.averageUnitCost)}</td>
-                  <td className="px-3 py-2">{balance.active ? "Ativo" : "Inativo"}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
-                      <TableIconButton
-                        aria-label={`Editar saldo de ${balance.product.name}`}
-                        onClick={() => openEditDialog(balance)}
-                      >
-                        <Pencil size={16} />
-                      </TableIconButton>
-                      <TableIconButton
-                        aria-label={`Inativar saldo de ${balance.product.name}`}
-                        variant="danger"
-                        disabled={deactivateMutation.isPending}
-                        onClick={() => setConfirmTarget(balance)}
-                      >
-                        <Trash2 size={16} />
-                      </TableIconButton>
-                    </div>
-                  </td>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Produto</th>
+                  <th className="px-3 py-2">Fazenda</th>
+                  <th className="px-3 py-2">Local</th>
+                  <th className="px-3 py-2">Quantidade</th>
+                  <th className="px-3 py-2">Custo médio</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {balances.map((balance) => (
+                  <tr key={balance.id} className="border-t">
+                    <td className="px-3 py-2">{balance.product.name}</td>
+                    <td className="px-3 py-2">{balance.farm.name}</td>
+                    <td className="px-3 py-2">{balance.inventoryLocation.name}</td>
+                    <td className="px-3 py-2">{Number(balance.quantity)}</td>
+                    <td className="px-3 py-2">{Number(balance.averageUnitCost)}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <TableIconButton
+                          aria-label={`Editar saldo de ${balance.product.name}`}
+                          onClick={() => openEditDialog(balance)}
+                        >
+                          <Pencil size={16} />
+                        </TableIconButton>
+                        <TableIconButton
+                          aria-label={`Inativar saldo de ${balance.product.name}`}
+                          variant="danger"
+                          disabled={deactivateMutation.isPending}
+                          onClick={() => setConfirmTarget(balance)}
+                        >
+                          <Trash2 size={16} />
+                        </TableIconButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls
@@ -294,42 +364,30 @@ export function InventoryBalancePage() {
         <div className="grid gap-3">
           {dialogMode === "create" ? (
             <>
-              <select
+              <AppSelect
                 value={farmId}
-                onChange={(event) => setFarmId(event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">Selecione a fazenda</option>
-                {farms.map((farm: FarmEntity) => (
-                  <option key={farm.id} value={farm.id}>
-                    {farm.name}
-                  </option>
-                ))}
-              </select>
-              <select
+                onValueChange={(value) => setFarmId(value)}
+                options={farms.map((farm: FarmEntity) => ({ value: farm.id, label: farm.name }))}
+                placeholder="Selecione a fazenda"
+              />
+              <AppSelect
                 value={inventoryLocationId}
-                onChange={(event) => setInventoryLocationId(event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">Selecione o local de estoque</option>
-                {filteredLocations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-              <select
+                onValueChange={(value) => setInventoryLocationId(value)}
+                options={filteredLocations.map((location) => ({
+                  value: location.id,
+                  label: location.name,
+                }))}
+                placeholder="Selecione o local de estoque"
+              />
+              <AppSelect
                 value={productId}
-                onChange={(event) => setProductId(event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">Selecione o produto</option>
-                {products.map((product: ProductEntity) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} ({product.code})
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => setProductId(value)}
+                options={products.map((product: ProductEntity) => ({
+                  value: product.id,
+                  label: `${product.name} (${product.code})`,
+                }))}
+                placeholder="Selecione o produto"
+              />
             </>
           ) : (
             <div className="rounded-[var(--radius-md)] border bg-[hsl(var(--surface-muted))] px-4 py-3 text-sm text-[hsl(var(--foreground-muted))]">

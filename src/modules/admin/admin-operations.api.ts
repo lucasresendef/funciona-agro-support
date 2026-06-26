@@ -183,10 +183,7 @@ export const adminOperationsApi = {
     return res.data.data;
   },
 
-  async updateProduct(
-    productId: string,
-    payload: UpdateProductRequestDto,
-  ): Promise<ProductEntity> {
+  async updateProduct(productId: string, payload: UpdateProductRequestDto): Promise<ProductEntity> {
     const res = await api.patch<DataWrapper<ProductEntity>>(`/products/${productId}`, payload);
     return res.data.data;
   },
@@ -250,6 +247,7 @@ export const adminOperationsApi = {
           farmId: query.farmId || undefined,
           inventoryLocationId: query.inventoryLocationId || undefined,
           productId: query.productId || undefined,
+          search: query.search || undefined,
           active: typeof query.active === "boolean" ? query.active : undefined,
         },
       },
@@ -260,10 +258,7 @@ export const adminOperationsApi = {
   async createInventoryBalance(
     payload: CreateInventoryBalanceRequestDto,
   ): Promise<InventoryBalanceEntity> {
-    const res = await api.post<DataWrapper<InventoryBalanceEntity>>(
-      "/inventory/balance",
-      payload,
-    );
+    const res = await api.post<DataWrapper<InventoryBalanceEntity>>("/inventory/balance", payload);
     return res.data.data;
   },
 

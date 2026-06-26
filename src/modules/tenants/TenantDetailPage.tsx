@@ -14,6 +14,7 @@ import { formatBooleanPtBr } from "@/shared/lib/utils/format";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { MetricCard } from "@/shared/ui/components/MetricCard";
@@ -29,7 +30,6 @@ import { toast } from "sonner";
 const ROLES: FarmUserRole[] = ["OWNER", "MANAGER", "OPERATOR", "VIEWER"];
 const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 text-sm";
 const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white px-3 py-2 text-sm";
-const selectClassName = inputClassName;
 
 type Tab = "users" | "permissions" | "farms" | "fields";
 
@@ -861,41 +861,26 @@ export function TenantDetailPage() {
         }
       >
         <div className="grid gap-3">
-          <select
+          <AppSelect
             value={permissionUserId}
-            onChange={(event) => setPermissionUserId(event.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Selecione o usuário</option>
-            {activeUsers.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} ({user.email})
-              </option>
-            ))}
-          </select>
-          <select
+            onValueChange={(value) => setPermissionUserId(value)}
+            options={activeUsers.map((user) => ({
+              value: user.id,
+              label: `${user.name} (${user.email})`,
+            }))}
+            placeholder="Selecione o usuário"
+          />
+          <AppSelect
             value={permissionFarmId}
-            onChange={(event) => setPermissionFarmId(event.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Selecione a fazenda</option>
-            {activeFarms.map((farm) => (
-              <option key={farm.id} value={farm.id}>
-                {farm.name}
-              </option>
-            ))}
-          </select>
-          <select
+            onValueChange={(value) => setPermissionFarmId(value)}
+            options={activeFarms.map((farm) => ({ value: farm.id, label: farm.name }))}
+            placeholder="Selecione a fazenda"
+          />
+          <AppSelect
             value={permissionRole}
-            onChange={(event) => setPermissionRole(event.target.value as FarmUserRole)}
-            className={selectClassName}
-          >
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setPermissionRole(value as FarmUserRole)}
+            options={ROLES.map((role) => ({ value: role, label: role }))}
+          />
         </div>
       </AppDialog>
 
@@ -927,17 +912,11 @@ export function TenantDetailPage() {
         }
       >
         <div className="grid gap-3">
-          <select
+          <AppSelect
             value={editingPermissionRole}
-            onChange={(event) => setEditingPermissionRole(event.target.value as FarmUserRole)}
-            className={selectClassName}
-          >
-            {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setEditingPermissionRole(value as FarmUserRole)}
+            options={ROLES.map((role) => ({ value: role, label: role }))}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -1077,18 +1056,12 @@ export function TenantDetailPage() {
         }
       >
         <div className="grid gap-3">
-          <select
+          <AppSelect
             value={fieldFarmId}
-            onChange={(event) => setFieldFarmId(event.target.value)}
-            className={selectClassName}
-          >
-            <option value="">Selecione a fazenda</option>
-            {activeFarms.map((farm) => (
-              <option key={farm.id} value={farm.id}>
-                {farm.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setFieldFarmId(value)}
+            options={activeFarms.map((farm) => ({ value: farm.id, label: farm.name }))}
+            placeholder="Selecione a fazenda"
+          />
           <input
             value={fieldName}
             onChange={(event) => setFieldName(event.target.value)}

@@ -1,6 +1,6 @@
 import { useAuth } from "@/modules/auth/AuthContext";
 import { AppButton } from "@/shared/ui/components/AppButton";
-import { BrandLogo } from "@/shared/ui/components/BrandLogo";
+import { MobileNav } from "./MobileNav";
 
 export function Topbar() {
   const { profile, logout } = useAuth();
@@ -8,7 +8,7 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-[hsl(var(--surface))/0.92] px-4 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
-        <BrandLogo mode="icon" className="h-8 w-8 md:hidden" />
+        <MobileNav />
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground-muted))]">
             Tecnologia que funciona no campo

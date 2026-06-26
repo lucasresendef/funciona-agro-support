@@ -4,10 +4,10 @@ import { queryKeys } from "@/shared/config/query-keys";
 import { routes } from "@/shared/config/routes";
 import { getApiErrorMessage, handleSecurityError } from "@/shared/lib/http/security";
 import { formatDatePtBr } from "@/shared/lib/utils/date";
-import { formatBooleanPtBr } from "@/shared/lib/utils/format";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
@@ -154,18 +154,18 @@ export function TenantsPage() {
             className={`${inputClassName} w-full pl-9`}
           />
         </label>
-        <select
+        <AppSelect
           value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value as TenantStatusFilter);
+          onValueChange={(value) => {
+            setStatusFilter(value as TenantStatusFilter);
             pagination.resetPage();
           }}
-          className={inputClassName}
-        >
-          <option value="all">Todos os status</option>
-          <option value="active">Ativos</option>
-          <option value="inactive">Inativos</option>
-        </select>
+          options={[
+            { value: "all", label: "Todos os status" },
+            { value: "active", label: "Ativos" },
+            { value: "inactive", label: "Inativos" },
+          ]}
+        />
         <div className="flex justify-start md:justify-end">
           <AppButton
             type="button"
@@ -196,72 +196,72 @@ export function TenantsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Nome</th>
-                <th className="px-3 py-2">Key</th>
-                <th className="px-3 py-2">Usuários</th>
-                <th className="px-3 py-2">Fazendas</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Atualizado em</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tenants.map((tenant) => (
-                <tr key={tenant.id} className="border-t">
-                  <td className="px-3 py-3 font-medium text-[hsl(var(--brand-dark))]">
-                    {tenant.name}
-                  </td>
-                  <td className="px-3 py-3">{tenant.key}</td>
-                  <td className="px-3 py-3">{tenant.stats.users}</td>
-                  <td className="px-3 py-3">{tenant.stats.farms}</td>
-                  <td className="px-3 py-3">{formatBooleanPtBr(tenant.active)}</td>
-                  <td className="px-3 py-3">{formatDatePtBr(tenant.updatedAt)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex justify-end gap-2">
-                      <TableIconButton
-                        aria-label={`Abrir ${tenant.name}`}
-                        onClick={() => navigate(routes.tenantDetail.replace(":tenantId", tenant.id))}
-                      >
-                        <Eye size={16} />
-                      </TableIconButton>
-                      <TableIconButton
-                        aria-label={`Editar ${tenant.name}`}
-                        onClick={() => startEditTenant(tenant)}
-                      >
-                        <Pencil size={16} />
-                      </TableIconButton>
-                      {tenant.active ? (
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Nome</th>
+                  <th className="px-3 py-2">Key</th>
+                  <th className="px-3 py-2">Usuários</th>
+                  <th className="px-3 py-2">Fazendas</th>
+                  <th className="px-3 py-2">Atualizado em</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tenants.map((tenant) => (
+                  <tr key={tenant.id} className="border-t">
+                    <td className="px-3 py-3 font-medium text-[hsl(var(--brand-dark))]">
+                      {tenant.name}
+                    </td>
+                    <td className="px-3 py-3">{tenant.key}</td>
+                    <td className="px-3 py-3">{tenant.stats.users}</td>
+                    <td className="px-3 py-3">{tenant.stats.farms}</td>
+                    <td className="px-3 py-3">{formatDatePtBr(tenant.updatedAt)}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex justify-end gap-2">
                         <TableIconButton
-                          aria-label={`Inativar ${tenant.name}`}
-                          variant="danger"
-                          disabled={deactivateTenantMutation.isPending}
-                          onClick={() => setTenantToDeactivate(tenant)}
-                        >
-                          <Trash2 size={16} />
-                        </TableIconButton>
-                      ) : (
-                        <TableIconButton
-                          aria-label={`Reativar ${tenant.name}`}
-                          disabled={toggleTenantStatusMutation.isPending}
+                          aria-label={`Abrir ${tenant.name}`}
                           onClick={() =>
-                            toggleTenantStatusMutation.mutate({
-                              tenantId: tenant.id,
-                              active: true,
-                            })
+                            navigate(routes.tenantDetail.replace(":tenantId", tenant.id))
                           }
                         >
-                          <RotateCcw size={16} />
+                          <Eye size={16} />
                         </TableIconButton>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <TableIconButton
+                          aria-label={`Editar ${tenant.name}`}
+                          onClick={() => startEditTenant(tenant)}
+                        >
+                          <Pencil size={16} />
+                        </TableIconButton>
+                        {tenant.active ? (
+                          <TableIconButton
+                            aria-label={`Inativar ${tenant.name}`}
+                            variant="danger"
+                            disabled={deactivateTenantMutation.isPending}
+                            onClick={() => setTenantToDeactivate(tenant)}
+                          >
+                            <Trash2 size={16} />
+                          </TableIconButton>
+                        ) : (
+                          <TableIconButton
+                            aria-label={`Reativar ${tenant.name}`}
+                            disabled={toggleTenantStatusMutation.isPending}
+                            onClick={() =>
+                              toggleTenantStatusMutation.mutate({
+                                tenantId: tenant.id,
+                                active: true,
+                              })
+                            }
+                          >
+                            <RotateCcw size={16} />
+                          </TableIconButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls

@@ -12,7 +12,10 @@ import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
+import { SearchInput } from "@/shared/ui/components/SearchInput";
+import { StatusFilter } from "@/shared/ui/components/StatusFilter";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
+import { useDebouncedValue } from "@/shared/lib/hooks/useDebouncedValue";
 import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
@@ -27,6 +30,9 @@ export function FarmsPage() {
   const pagination = usePaginationState();
   const { profile } = useAuth();
   const canManage = isAppAdmin(profile);
+  const [showActive, setShowActive] = useState(true);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetFarm, setTargetFarm] = useState<FarmEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<FarmEntity | null>(null);
@@ -34,8 +40,13 @@ export function FarmsPage() {
   const [description, setDescription] = useState("");
 
   const query = useQuery({
-    queryKey: [...queryKeys.farms, pagination.pagination],
-    queryFn: () => adminOperationsApi.listFarms(pagination.pagination),
+    queryKey: [...queryKeys.farms, pagination.pagination, showActive, debouncedSearch],
+    queryFn: () =>
+      adminOperationsApi.listFarms({
+        ...pagination.pagination,
+        active: showActive,
+        search: debouncedSearch.trim() || undefined,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -116,6 +127,13 @@ export function FarmsPage() {
         breadcrumb="Operações / Fazendas"
         actions={
           <div className="flex items-center gap-2">
+            <StatusFilter
+              value={showActive}
+              onChange={(active) => {
+                setShowActive(active);
+                pagination.setPage(1);
+              }}
+            />
             <RefreshIconButton onClick={() => query.refetch()} disabled={query.isFetching} />
             {canManage ? (
               <AppButton type="button" onClick={openCreateDialog}>
@@ -125,6 +143,18 @@ export function FarmsPage() {
           </div>
         }
       />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <SearchInput
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            pagination.setPage(1);
+          }}
+          placeholder="Buscar fazenda..."
+          className="w-full sm:max-w-xs"
+        />
+      </div>
 
       {query.isError ? (
         <EmptyState
@@ -139,45 +169,43 @@ export function FarmsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Nome</th>
-                <th className="px-3 py-2">Descrição</th>
-                <th className="px-3 py-2">Status</th>
-                {canManage ? <th className="px-3 py-2 text-right">Ações</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {farms.map((farm) => (
-                <tr key={farm.id} className="border-t">
-                  <td className="px-3 py-2">{farm.name}</td>
-                  <td className="px-3 py-2">{farm.description ?? "-"}</td>
-                  <td className="px-3 py-2">{farm.active ? "Ativa" : "Inativa"}</td>
-                  {canManage ? (
-                    <td className="px-3 py-2">
-                      <div className="flex justify-end gap-2">
-                        <TableIconButton
-                          aria-label={`Editar ${farm.name}`}
-                          onClick={() => openEditDialog(farm)}
-                        >
-                          <Pencil size={16} />
-                        </TableIconButton>
-                        <TableIconButton
-                          aria-label={`Inativar ${farm.name}`}
-                          variant="danger"
-                          disabled={deactivateMutation.isPending}
-                          onClick={() => setConfirmTarget(farm)}
-                        >
-                          <Trash2 size={16} />
-                        </TableIconButton>
-                      </div>
-                    </td>
-                  ) : null}
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Nome</th>
+                  <th className="px-3 py-2">Descrição</th>
+                  {canManage ? <th className="px-3 py-2 text-right">Ações</th> : null}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {farms.map((farm) => (
+                  <tr key={farm.id} className="border-t">
+                    <td className="px-3 py-2">{farm.name}</td>
+                    <td className="px-3 py-2">{farm.description ?? "-"}</td>
+                    {canManage ? (
+                      <td className="px-3 py-2">
+                        <div className="flex justify-end gap-2">
+                          <TableIconButton
+                            aria-label={`Editar ${farm.name}`}
+                            onClick={() => openEditDialog(farm)}
+                          >
+                            <Pencil size={16} />
+                          </TableIconButton>
+                          <TableIconButton
+                            aria-label={`Inativar ${farm.name}`}
+                            variant="danger"
+                            disabled={deactivateMutation.isPending}
+                            onClick={() => setConfirmTarget(farm)}
+                          >
+                            <Trash2 size={16} />
+                          </TableIconButton>
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls

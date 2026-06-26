@@ -33,7 +33,12 @@ export function ConfirmDialog({
           <AppButton type="button" variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </AppButton>
-          <AppButton type="button" onClick={onConfirm} disabled={isPending} className="bg-red-500 text-white hover:bg-red-600">
+          <AppButton
+            type="button"
+            onClick={onConfirm}
+            disabled={isPending}
+            className="bg-red-500 text-white hover:bg-red-600"
+          >
             {isPending ? "Processando..." : confirmLabel}
           </AppButton>
         </>

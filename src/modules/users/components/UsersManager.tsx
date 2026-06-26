@@ -54,13 +54,7 @@ interface UsersManagerProps {
   api: UsersManagerApi;
 }
 
-export function UsersManager({
-  users,
-  totalUsers,
-  isLoading,
-  onChanged,
-  api,
-}: UsersManagerProps) {
+export function UsersManager({ users, totalUsers, isLoading, onChanged, api }: UsersManagerProps) {
   const navigate = useNavigate();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);

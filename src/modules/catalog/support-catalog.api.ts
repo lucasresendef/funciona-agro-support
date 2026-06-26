@@ -34,7 +34,10 @@ export const supportCatalogApi = {
   },
 
   async createUnit(payload: CreateSupportCatalogUnitRequestDto): Promise<SupportCatalogUnitDto> {
-    const res = await api.post<DataWrapper<SupportCatalogUnitDto>>("/support/catalog/units", payload);
+    const res = await api.post<DataWrapper<SupportCatalogUnitDto>>(
+      "/support/catalog/units",
+      payload,
+    );
     return res.data.data;
   },
 

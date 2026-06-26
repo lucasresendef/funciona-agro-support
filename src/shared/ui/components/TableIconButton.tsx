@@ -12,8 +12,7 @@ interface TableIconButtonProps
 const styles: Record<Variant, string> = {
   neutral:
     "border-[hsl(var(--border))] text-[hsl(var(--foreground-muted))] hover:border-[hsl(var(--brand-light))] hover:bg-[hsl(var(--surface-muted))] hover:text-[hsl(var(--brand-dark))]",
-  danger:
-    "border-red-200 text-red-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600",
+  danger: "border-red-200 text-red-500 hover:border-red-300 hover:bg-red-50 hover:text-red-600",
 };
 
 export function TableIconButton({

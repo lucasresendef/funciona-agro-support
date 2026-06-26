@@ -6,11 +6,13 @@ import { getApiErrorMessage } from "@/shared/lib/http/security";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
 import { AppDialog } from "@/shared/ui/components/AppDialog";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { ConfirmDialog } from "@/shared/ui/components/ConfirmDialog";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
 import { RefreshIconButton } from "@/shared/ui/components/RefreshIconButton";
+import { StatusFilter } from "@/shared/ui/components/StatusFilter";
 import { TableIconButton } from "@/shared/ui/components/TableIconButton";
 import { usePaginationState } from "@/shared/lib/hooks/usePaginationState";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,11 +21,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const ROLES: FarmUserRole[] = ["OWNER", "MANAGER", "OPERATOR", "VIEWER"];
-const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 text-sm";
 
 export function FarmPermissionsPage() {
   const queryClient = useQueryClient();
   const pagination = usePaginationState();
+  const [showActive, setShowActive] = useState(true);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [targetPermission, setTargetPermission] = useState<FarmPermissionListEntity | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<FarmPermissionListEntity | null>(null);
@@ -33,8 +35,9 @@ export function FarmPermissionsPage() {
   const [active, setActive] = useState(true);
 
   const permissionsQuery = useQuery({
-    queryKey: [...queryKeys.farmPermissions, pagination.pagination],
-    queryFn: () => adminOperationsApi.listPermissions(pagination.pagination),
+    queryKey: [...queryKeys.farmPermissions, pagination.pagination, showActive],
+    queryFn: () =>
+      adminOperationsApi.listPermissions({ ...pagination.pagination, active: showActive }),
     placeholderData: keepPreviousData,
   });
 
@@ -134,6 +137,13 @@ export function FarmPermissionsPage() {
         breadcrumb="Operações / Permissões"
         actions={
           <div className="flex items-center gap-2">
+            <StatusFilter
+              value={showActive}
+              onChange={(active) => {
+                setShowActive(active);
+                pagination.setPage(1);
+              }}
+            />
             <RefreshIconButton
               onClick={() => {
                 void queryClient.invalidateQueries({ queryKey: queryKeys.farmPermissions });
@@ -166,47 +176,45 @@ export function FarmPermissionsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Usuário</th>
-                <th className="px-3 py-2">E-mail</th>
-                <th className="px-3 py-2">Fazenda</th>
-                <th className="px-3 py-2">Papel</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {permissions.map((permission) => (
-                <tr key={permission.id} className="border-t">
-                  <td className="px-3 py-2">{permission.userName}</td>
-                  <td className="px-3 py-2">{permission.userEmail}</td>
-                  <td className="px-3 py-2">{permission.farm.name}</td>
-                  <td className="px-3 py-2">{permission.role}</td>
-                  <td className="px-3 py-2">{permission.active ? "Ativa" : "Inativa"}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
-                      <TableIconButton
-                        aria-label={`Editar permissão de ${permission.userName}`}
-                        onClick={() => openEditDialog(permission)}
-                      >
-                        <Pencil size={16} />
-                      </TableIconButton>
-                      <TableIconButton
-                        aria-label={`Inativar permissão de ${permission.userName}`}
-                        variant="danger"
-                        disabled={deactivateMutation.isPending}
-                        onClick={() => setConfirmTarget(permission)}
-                      >
-                        <Trash2 size={16} />
-                      </TableIconButton>
-                    </div>
-                  </td>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Usuário</th>
+                  <th className="px-3 py-2">E-mail</th>
+                  <th className="px-3 py-2">Fazenda</th>
+                  <th className="px-3 py-2">Papel</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {permissions.map((permission) => (
+                  <tr key={permission.id} className="border-t">
+                    <td className="px-3 py-2">{permission.userName}</td>
+                    <td className="px-3 py-2">{permission.userEmail}</td>
+                    <td className="px-3 py-2">{permission.farm.name}</td>
+                    <td className="px-3 py-2">{permission.role}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <TableIconButton
+                          aria-label={`Editar permissão de ${permission.userName}`}
+                          onClick={() => openEditDialog(permission)}
+                        >
+                          <Pencil size={16} />
+                        </TableIconButton>
+                        <TableIconButton
+                          aria-label={`Inativar permissão de ${permission.userName}`}
+                          variant="danger"
+                          disabled={deactivateMutation.isPending}
+                          onClick={() => setConfirmTarget(permission)}
+                        >
+                          <Trash2 size={16} />
+                        </TableIconButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls
@@ -259,47 +267,32 @@ export function FarmPermissionsPage() {
         <div className="grid gap-3">
           {dialogMode === "create" ? (
             <>
-              <select
+              <AppSelect
                 value={userId}
-                onChange={(event) => setUserId(event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">Selecione o usuário</option>
-                {users.map((user: AppUserEntity) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name} ({user.email})
-                  </option>
-                ))}
-              </select>
-              <select
+                onValueChange={(value) => setUserId(value)}
+                options={users.map((user: AppUserEntity) => ({
+                  value: user.id,
+                  label: `${user.name} (${user.email})`,
+                }))}
+                placeholder="Selecione o usuário"
+              />
+              <AppSelect
                 value={farmId}
-                onChange={(event) => setFarmId(event.target.value)}
-                className={inputClassName}
-              >
-                <option value="">Selecione a fazenda</option>
-                {farms.map((farm: FarmEntity) => (
-                  <option key={farm.id} value={farm.id}>
-                    {farm.name}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => setFarmId(value)}
+                options={farms.map((farm: FarmEntity) => ({ value: farm.id, label: farm.name }))}
+                placeholder="Selecione a fazenda"
+              />
             </>
           ) : (
             <div className="rounded-[var(--radius-md)] border bg-[hsl(var(--surface-muted))] px-4 py-3 text-sm text-[hsl(var(--foreground-muted))]">
               {targetPermission?.userName} na fazenda {targetPermission?.farm.name}
             </div>
           )}
-          <select
+          <AppSelect
             value={role}
-            onChange={(event) => setRole(event.target.value as FarmUserRole)}
-            className={inputClassName}
-          >
-            {ROLES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setRole(value as FarmUserRole)}
+            options={ROLES.map((option) => ({ value: option, label: option }))}
+          />
           {dialogMode === "edit" ? (
             <label className="flex items-center gap-2 text-sm">
               <input

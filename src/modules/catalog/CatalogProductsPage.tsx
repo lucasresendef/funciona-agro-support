@@ -1,13 +1,12 @@
 import { supportCatalogApi } from "@/modules/catalog/support-catalog.api";
-import type {
-  SupportCatalogProductDto,
-} from "@/modules/catalog/contracts/support-catalog.dto";
+import type { SupportCatalogProductDto } from "@/modules/catalog/contracts/support-catalog.dto";
 import { queryKeys } from "@/shared/config/query-keys";
 import { getApiErrorMessage, handleSecurityError } from "@/shared/lib/http/security";
 import { formatDatePtBr } from "@/shared/lib/utils/date";
 import { formatBooleanPtBr } from "@/shared/lib/utils/format";
 import { AppButton } from "@/shared/ui/components/AppButton";
 import { AppCard } from "@/shared/ui/components/AppCard";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
 import { EmptyState } from "@/shared/ui/components/EmptyState";
 import { PaginationControls } from "@/shared/ui/components/PaginationControls";
 import { PageHeader } from "@/shared/ui/components/PageHeader";
@@ -19,8 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const inputClassName = "h-10 rounded-[var(--radius-md)] border bg-white px-3 text-sm";
-const textareaClassName =
-  "min-h-24 rounded-[var(--radius-md)] border bg-white px-3 py-2 text-sm";
+const textareaClassName = "min-h-24 rounded-[var(--radius-md)] border bg-white px-3 py-2 text-sm";
 
 export function CatalogProductsPage() {
   const navigate = useNavigate();
@@ -166,17 +164,33 @@ export function CatalogProductsPage() {
         <section className="grid gap-4 lg:grid-cols-2">
           <AppCard className="space-y-3">
             <h3 className="text-lg font-bold text-[hsl(var(--brand-dark))]">Novo produto</h3>
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do produto" className={inputClassName} />
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Código" className={inputClassName} />
-            <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Categoria" className={inputClassName} />
-            <select value={unitOfMeasureId} onChange={(event) => setUnitOfMeasureId(event.target.value)} className={inputClassName}>
-              <option value="">Selecione a unidade</option>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.name} ({unit.symbol})
-                </option>
-              ))}
-            </select>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Nome do produto"
+              className={inputClassName}
+            />
+            <input
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Código"
+              className={inputClassName}
+            />
+            <input
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder="Categoria"
+              className={inputClassName}
+            />
+            <AppSelect
+              value={unitOfMeasureId}
+              onValueChange={(value) => setUnitOfMeasureId(value)}
+              options={units.map((unit) => ({
+                value: unit.id,
+                label: `${unit.name} (${unit.symbol})`,
+              }))}
+              placeholder="Selecione a unidade"
+            />
             <input
               value={activeIngredient}
               onChange={(event) => setActiveIngredient(event.target.value)}
@@ -208,25 +222,42 @@ export function CatalogProductsPage() {
             <AppCard className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-[hsl(var(--brand-dark))]">Editar produto</h3>
-                <AppButton type="button" variant="ghost" className="h-9 px-3" onClick={() => setEditingProduct(null)}>
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  className="h-9 px-3"
+                  onClick={() => setEditingProduct(null)}
+                >
                   Fechar
                 </AppButton>
               </div>
-              <input value={editingName} onChange={(event) => setEditingName(event.target.value)} placeholder="Nome do produto" className={inputClassName} />
-              <input value={editingCode} onChange={(event) => setEditingCode(event.target.value)} placeholder="Código" className={inputClassName} />
-              <input value={editingCategory} onChange={(event) => setEditingCategory(event.target.value)} placeholder="Categoria" className={inputClassName} />
-              <select
-                value={editingUnitOfMeasureId}
-                onChange={(event) => setEditingUnitOfMeasureId(event.target.value)}
+              <input
+                value={editingName}
+                onChange={(event) => setEditingName(event.target.value)}
+                placeholder="Nome do produto"
                 className={inputClassName}
-              >
-                <option value="">Selecione a unidade</option>
-                {units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name} ({unit.symbol})
-                  </option>
-                ))}
-              </select>
+              />
+              <input
+                value={editingCode}
+                onChange={(event) => setEditingCode(event.target.value)}
+                placeholder="Código"
+                className={inputClassName}
+              />
+              <input
+                value={editingCategory}
+                onChange={(event) => setEditingCategory(event.target.value)}
+                placeholder="Categoria"
+                className={inputClassName}
+              />
+              <AppSelect
+                value={editingUnitOfMeasureId}
+                onValueChange={(value) => setEditingUnitOfMeasureId(value)}
+                options={units.map((unit) => ({
+                  value: unit.id,
+                  label: `${unit.name} (${unit.symbol})`,
+                }))}
+                placeholder="Selecione a unidade"
+              />
               <input
                 value={editingActiveIngredient}
                 onChange={(event) => setEditingActiveIngredient(event.target.value)}
@@ -278,54 +309,59 @@ export function CatalogProductsPage() {
       ) : (
         <>
           <AppCard className="overflow-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-[hsl(var(--surface-muted))]">
-              <tr>
-                <th className="px-3 py-2">Nome</th>
-                <th className="px-3 py-2">Código</th>
-                <th className="px-3 py-2">Categoria</th>
-                <th className="px-3 py-2">Unidade</th>
-                <th className="px-3 py-2">Ativo</th>
-                <th className="px-3 py-2">Atualizado em</th>
-                <th className="px-3 py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className="border-t">
-                  <td className="px-3 py-2">{product.name}</td>
-                  <td className="px-3 py-2">{product.code}</td>
-                  <td className="px-3 py-2">{product.category}</td>
-                  <td className="px-3 py-2">
-                    {product.unitOfMeasure.name} ({product.unitOfMeasure.symbol})
-                  </td>
-                  <td className="px-3 py-2">{formatBooleanPtBr(product.active)}</td>
-                  <td className="px-3 py-2">{formatDatePtBr(product.updatedAt)}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-end gap-2">
-                      <AppButton type="button" variant="ghost" className="h-9 px-3" onClick={() => startEdit(product)}>
-                        Editar
-                      </AppButton>
-                      <AppButton
-                        type="button"
-                        variant="ghost"
-                        className="h-9 px-3"
-                        disabled={toggleStatusMutation.isPending}
-                        onClick={() =>
-                          toggleStatusMutation.mutate({
-                            productId: product.id,
-                            active: !product.active,
-                          })
-                        }
-                      >
-                        {product.active ? "Inativar" : "Reativar"}
-                      </AppButton>
-                    </div>
-                  </td>
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-[hsl(var(--surface-muted))]">
+                <tr>
+                  <th className="px-3 py-2">Nome</th>
+                  <th className="px-3 py-2">Código</th>
+                  <th className="px-3 py-2">Categoria</th>
+                  <th className="px-3 py-2">Unidade</th>
+                  <th className="px-3 py-2">Ativo</th>
+                  <th className="px-3 py-2">Atualizado em</th>
+                  <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id} className="border-t">
+                    <td className="px-3 py-2">{product.name}</td>
+                    <td className="px-3 py-2">{product.code}</td>
+                    <td className="px-3 py-2">{product.category}</td>
+                    <td className="px-3 py-2">
+                      {product.unitOfMeasure.name} ({product.unitOfMeasure.symbol})
+                    </td>
+                    <td className="px-3 py-2">{formatBooleanPtBr(product.active)}</td>
+                    <td className="px-3 py-2">{formatDatePtBr(product.updatedAt)}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex justify-end gap-2">
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          className="h-9 px-3"
+                          onClick={() => startEdit(product)}
+                        >
+                          Editar
+                        </AppButton>
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          className="h-9 px-3"
+                          disabled={toggleStatusMutation.isPending}
+                          onClick={() =>
+                            toggleStatusMutation.mutate({
+                              productId: product.id,
+                              active: !product.active,
+                            })
+                          }
+                        >
+                          {product.active ? "Inativar" : "Reativar"}
+                        </AppButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </AppCard>
 
           <PaginationControls

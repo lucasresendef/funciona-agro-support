@@ -7,6 +7,9 @@ import { FarmPermissionsPage } from "@/modules/farm-permissions/FarmPermissionsP
 import { FarmsPage } from "@/modules/farms/FarmsPage";
 import { FieldsPage } from "@/modules/fields/FieldsPage";
 import { HomePage } from "@/modules/home/HomePage";
+import { FieldReportPage } from "@/modules/insights/FieldReportPage";
+import { MetricsPage } from "@/modules/insights/MetricsPage";
+import { OperationsPage } from "@/modules/operations/OperationsPage";
 import { ProductsPage } from "@/modules/products/ProductsPage";
 import { ReportsPage } from "@/modules/reports/ReportsPage";
 import { NewTenantPage } from "@/modules/tenants/NewTenantPage";
@@ -55,6 +58,9 @@ export const router = createBrowserRouter([
               { path: routes.farms, element: <FarmsPage /> },
               { path: routes.fields, element: <FieldsPage /> },
               { path: routes.products, element: <ProductsPage /> },
+              { path: routes.operations, element: <OperationsPage /> },
+              { path: routes.metrics, element: <MetricsPage /> },
+              { path: routes.fieldReport, element: <FieldReportPage /> },
             ],
           },
           {

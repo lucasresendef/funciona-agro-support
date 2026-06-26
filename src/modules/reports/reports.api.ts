@@ -1,8 +1,8 @@
 import { api } from "@/shared/lib/http/api-client";
 import type { DownloadInventoryMovementsCsvQuery } from "./contracts/reports.dto";
 
-function parseFilename(contentDisposition?: string): string {
-  if (!contentDisposition) return `inventory-movements-${Date.now()}.csv`;
+function parseFilename(contentDisposition: string | undefined, fallback: string): string {
+  if (!contentDisposition) return fallback;
 
   const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
   if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
@@ -10,7 +10,25 @@ function parseFilename(contentDisposition?: string): string {
   const standardMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
   if (standardMatch?.[1]) return standardMatch[1];
 
-  return `inventory-movements-${Date.now()}.csv`;
+  return fallback;
+}
+
+function triggerBlobDownload(data: Blob, fileName: string): void {
+  const blobUrl = window.URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+export interface DownloadFieldOperationsCsvQuery {
+  farmId?: string;
+  status?: string;
+  from?: string;
+  to?: string;
 }
 
 export const reportsApi = {
@@ -30,14 +48,32 @@ export const reportsApi = {
       responseType: "blob",
     });
 
-    const fileName = parseFilename(response.headers["content-disposition"] as string | undefined);
-    const blobUrl = window.URL.createObjectURL(response.data);
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(blobUrl);
+    triggerBlobDownload(
+      response.data,
+      parseFilename(
+        response.headers["content-disposition"] as string | undefined,
+        `inventory-movements-${Date.now()}.csv`,
+      ),
+    );
+  },
+
+  async downloadFieldOperationsCsv(query: DownloadFieldOperationsCsvQuery): Promise<void> {
+    const response = await api.get<Blob>("/reports/field-operations/csv", {
+      params: {
+        farmId: query.farmId || undefined,
+        status: query.status || undefined,
+        from: query.from || undefined,
+        to: query.to || undefined,
+      },
+      responseType: "blob",
+    });
+
+    triggerBlobDownload(
+      response.data,
+      parseFilename(
+        response.headers["content-disposition"] as string | undefined,
+        `operacoes-${Date.now()}.csv`,
+      ),
+    );
   },
 };

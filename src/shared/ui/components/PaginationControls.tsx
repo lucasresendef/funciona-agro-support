@@ -1,7 +1,7 @@
-import { AppButton } from "@/shared/ui/components/AppButton";
-import { AppCard } from "@/shared/ui/components/AppCard";
-import { cn } from "@/shared/lib/utils/cn";
 import { PAGE_SIZE_OPTIONS } from "@/shared/lib/hooks/usePaginationState";
+import { cn } from "@/shared/lib/utils/cn";
+import { AppSelect } from "@/shared/ui/components/AppSelect";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationControlsProps {
   page: number;
@@ -12,6 +12,9 @@ interface PaginationControlsProps {
   onLimitChange: (limit: number) => void;
   className?: string;
 }
+
+const navButtonClass =
+  "inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] text-[hsl(var(--foreground-muted))] transition hover:bg-[hsl(var(--surface-muted))] hover:text-[hsl(var(--brand-dark))] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent";
 
 export function PaginationControls({
   page,
@@ -29,58 +32,53 @@ export function PaginationControls({
   const canGoNext = totalPages > 0 && page < totalPages;
 
   return (
-    <AppCard
+    <div
       className={cn(
-        "flex flex-col gap-4 border-dashed bg-[hsl(var(--surface-muted))]/40 p-4 lg:flex-row lg:items-center lg:justify-between",
+        "flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-[hsl(var(--foreground-muted))]",
         className,
       )}
     >
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-[hsl(var(--brand-dark))]">
-          {hasResults ? `Mostrando ${startItem} a ${endItem} de ${total}` : "Sem registros"}
-        </p>
-        <p className="text-xs text-[hsl(var(--foreground-muted))]">
-          Página {totalPages > 0 ? page : 0} de {totalPages}
-        </p>
-      </div>
+      <span>{hasResults ? `${startItem}–${endItem} de ${total}` : "Sem registros"}</span>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="flex items-center gap-2 text-sm text-[hsl(var(--foreground-muted))]">
-          <span>Itens por página</span>
-          <select
-            value={limit}
-            onChange={(event) => onLimitChange(Number(event.target.value))}
-            className="h-10 rounded-[var(--radius-md)] border bg-white px-3 text-sm"
-          >
-            {PAGE_SIZE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <AppSelect
+            value={String(limit)}
+            onValueChange={(value) => onLimitChange(Number(value))}
+            options={PAGE_SIZE_OPTIONS.map((option) => ({
+              value: String(option),
+              label: String(option),
+            }))}
+            className="h-8 w-auto"
+            ariaLabel="Itens por página"
+          />
+          <span className="hidden sm:inline">por página</span>
+        </div>
 
-        <div className="flex items-center gap-2">
-          <AppButton
+        <div className="flex items-center gap-1">
+          <button
             type="button"
-            variant="ghost"
-            className="h-10 px-3"
+            aria-label="Página anterior"
+            className={navButtonClass}
             disabled={!canGoBack}
             onClick={() => onPageChange(page - 1)}
           >
-            Anterior
-          </AppButton>
-          <AppButton
+            <ChevronLeft size={16} />
+          </button>
+          <span className="min-w-[2.75rem] text-center font-medium text-[hsl(var(--brand-dark))]">
+            {totalPages > 0 ? page : 0}/{totalPages}
+          </span>
+          <button
             type="button"
-            variant="ghost"
-            className="h-10 px-3"
+            aria-label="Próxima página"
+            className={navButtonClass}
             disabled={!canGoNext}
             onClick={() => onPageChange(page + 1)}
           >
-            Próxima
-          </AppButton>
+            <ChevronRight size={16} />
+          </button>
         </div>
       </div>
-    </AppCard>
+    </div>
   );
 }
