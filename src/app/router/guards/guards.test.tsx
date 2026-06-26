@@ -3,17 +3,26 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { AuthGuard } from "./AuthGuard";
 
+const authState = {
+  isAuthenticated: false,
+  isLoading: true,
+};
+
 vi.mock("@/modules/auth/AuthContext", () => ({
-  useAuth: () => ({ isAuthenticated: false, isLoading: false }),
+  useAuth: () => authState,
 }));
 
 describe("AuthGuard", () => {
-  it("renders redirect fallback", () => {
+  it("renders the loading splash while auth is resolving", () => {
     render(
       <MemoryRouter>
         <AuthGuard />
       </MemoryRouter>,
     );
-    expect(screen.queryByText("Carregando...")).not.toBeInTheDocument();
+
+    expect(
+      screen.getByRole("progressbar", { name: /carregando funciona agro/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Preparando seu ambiente")).toBeInTheDocument();
   });
 });
